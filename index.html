@@ -1,581 +1,65 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AR Experience</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Space+Mono:wght@400;700&display=swap');
-
-  :root {
-    --accent: #00f0ff;
-    --accent2: #ff3cac;
-    --accent3: #00ff87;
-    --bg-dark: #0a0a0f;
-    --glass: rgba(10, 10, 15, 0.65);
-    --glass-border: rgba(255, 255, 255, 0.08);
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: 'Outfit', sans-serif;
-    background: var(--bg-dark);
-    color: #fff;
-    overflow: hidden;
-    width: 100vw;
-    height: 100dvh;
-    touch-action: none;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-
-  #splash {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    background: var(--bg-dark);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
-    transition: opacity 0.6s ease, visibility 0.6s ease;
-  }
-  #splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-
-  #splash h1 {
-    font-family: 'Space Mono', monospace;
-    font-size: clamp(28px, 6vw, 48px);
-    letter-spacing: -1px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  #splash p {
-    color: rgba(255,255,255,0.5);
-    font-size: 14px;
-    max-width: 280px;
-    text-align: center;
-    line-height: 1.5;
-  }
-
-  .start-btn {
-    margin-top: 16px;
-    padding: 14px 40px;
-    border: 1px solid var(--accent);
-    background: transparent;
-    color: var(--accent);
-    font-family: 'Space Mono', monospace;
-    font-size: 15px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    cursor: pointer;
-    border-radius: 60px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-  }
-  .start-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--accent);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .start-btn:hover::before { opacity: 0.12; }
-  .start-btn:active { transform: scale(0.96); }
-
-  #video-bg {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: 0;
-  }
-
-  #ar-canvas {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-  }
-
-  /* HUD */
-  .hud-top {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 10;
-    padding: 16px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
-  }
-  .hud-label {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--accent);
-    opacity: 0.9;
-  }
-  .hud-dot {
-    width: 8px; height: 8px;
-    background: var(--accent2);
-    border-radius: 50%;
-    animation: pulse 1.5s ease infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,60,172,0.6); }
-    50% { opacity: 0.7; box-shadow: 0 0 0 8px rgba(255,60,172,0); }
-  }
-
-  /* Bottom toolbar */
-  .toolbar {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    z-index: 10;
-    padding: 12px 16px 28px;
-    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-  }
-  .object-selector {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    padding: 6px 0;
-    scrollbar-width: none;
-  }
-  .object-selector::-webkit-scrollbar { display: none; }
-
-  .obj-btn {
-    flex-shrink: 0;
-    padding: 10px 18px;
-    border-radius: 40px;
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    color: rgba(255,255,255,0.7);
-    font-family: 'Outfit', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .obj-btn.active {
-    background: linear-gradient(135deg, rgba(0,240,255,0.2), rgba(255,60,172,0.15));
-    border-color: var(--accent);
-    color: #fff;
-    box-shadow: 0 0 20px rgba(0,240,255,0.15);
-  }
-  .obj-btn:active { transform: scale(0.95); }
-  .obj-btn .icon { font-size: 16px; }
-
-  /* Crosshair */
-  .crosshair {
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 5;
-    pointer-events: none;
-    opacity: 0.35;
-  }
-  .crosshair svg { width: 48px; height: 48px; }
-
-  /* Info toast */
-  .toast {
-    position: fixed;
-    top: 70px; left: 50%;
-    transform: translateX(-50%);
-    z-index: 20;
-    padding: 10px 20px;
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 30px;
-    font-size: 12px;
-    color: rgba(255,255,255,0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    transition: opacity 0.4s, transform 0.4s;
-    text-align: center;
-    max-width: 90vw;
-  }
-  .toast.hidden { opacity: 0; transform: translateX(-50%) translateY(-10px); pointer-events: none; }
-
-  /* Scale slider */
-  .scale-control {
-    position: fixed;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 10;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-  .scale-control label {
-    font-family: 'Space Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 2px;
-    color: rgba(255,255,255,0.4);
-    text-transform: uppercase;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-  }
-  .scale-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100px;
-    height: 3px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 2px;
-    outline: none;
-    transform: rotate(-90deg);
-    transform-origin: center;
-  }
-  .scale-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 16px; height: 16px;
-    border-radius: 50%;
-    background: var(--accent);
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(0,240,255,0.4);
-  }
-
-  .no-camera {
-    position: fixed;
-    inset: 0;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    color: rgba(255,255,255,0.5);
-    font-size: 14px;
-    text-align: center;
-    padding: 24px;
-  }
-  .no-camera .emoji { font-size: 48px; margin-bottom: 8px; }
-
-  /* Scanline effect */
-  .scanlines {
-    position: fixed;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0, 240, 255, 0.015) 2px,
-      rgba(0, 240, 255, 0.015) 4px
-    );
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum AR — Meccanica Quantistica in Realtà Aumentata</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<!-- Splash screen -->
-<div id="splash">
-  <h1>AR Studio</h1>
-  <p>Posiziona oggetti 3D nel mondo reale attraverso la fotocamera del tuo dispositivo</p>
-  <button class="start-btn" id="startBtn">Avvia AR</button>
-</div>
+  <!-- Nav -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">QUANTUM AR</a>
+    </div>
+  </nav>
 
-<!-- Camera feed -->
-<video id="video-bg" autoplay playsinline muted></video>
+  <!-- Page -->
+  <main class="page" style="max-width:1000px;">
 
-<!-- Three.js canvas -->
-<canvas id="ar-canvas"></canvas>
+    <span class="section-label fade-in-up">🔬 Laboratorio Virtuale</span>
+    <h1 class="page-title fade-in-up stagger-1">Meccanica<br>Quantistica</h1>
+    <p class="page-subtitle fade-in-up stagger-2">Esplora i fenomeni quantistici con quiz interattivi e realtà aumentata</p>
 
-<!-- Scanlines overlay -->
-<div class="scanlines"></div>
+    <p class="card-text fade-in-up stagger-3" style="margin-bottom:2.5rem; max-width:700px;">
+      Ogni livello ti guida attraverso tre fasi: una spiegazione del fenomeno,
+      un quiz per verificare la tua comprensione, e un'esperienza in realtà
+      aumentata dove puoi interagire direttamente con la simulazione.
+    </p>
 
-<!-- Crosshair -->
-<div class="crosshair">
-  <svg viewBox="0 0 48 48" fill="none" stroke="rgba(0,240,255,0.6)" stroke-width="1">
-    <circle cx="24" cy="24" r="16" stroke-dasharray="4 4"/>
-    <line x1="24" y1="4" x2="24" y2="12"/>
-    <line x1="24" y1="36" x2="24" y2="44"/>
-    <line x1="4" y1="24" x2="12" y2="24"/>
-    <line x1="36" y1="24" x2="44" y2="24"/>
-  </svg>
-</div>
+    <!-- Level cards -->
+    <div class="levels-grid fade-in-up stagger-4">
 
-<!-- HUD -->
-<div class="hud-top">
-  <span class="hud-label">AR Live</span>
-  <div class="hud-dot"></div>
-</div>
+      <a href="pages/laser.html" class="level-card">
+        <div class="level-icon">⚡</div>
+        <h2 class="level-title">Il Laser Quantizzato</h2>
+        <p class="level-desc">
+          Scopri perché la luce viene in pacchetti. Regola frequenza e intensità
+          per osservare l'effetto fotoelettrico.
+        </p>
+        <span class="level-badge ready">Livello 1 — Pronto</span>
+      </a>
 
-<!-- Toast -->
-<div class="toast hidden" id="toast">Tocca lo schermo per posizionare l'oggetto</div>
+      <a href="pages/slit.html" class="level-card">
+        <div class="level-icon">🌊</div>
+        <h2 class="level-title">La Doppia Fenditura</h2>
+        <p class="level-desc">
+          Onda o particella? Spara particelle attraverso due fenditure e
+          osserva il pattern di interferenza.
+        </p>
+        <span class="level-badge ready">Livello 2 — Pronto</span>
+      </a>
 
-<!-- Scale -->
-<div class="scale-control">
-  <label>Scala</label>
-  <input type="range" class="scale-slider" id="scaleSlider" min="0.2" max="3" step="0.1" value="1">
-</div>
+    </div>
 
-<!-- Toolbar -->
-<div class="toolbar">
-  <div class="object-selector" id="objectSelector">
-    <button class="obj-btn active" data-shape="cube"><span class="icon">◆</span> Cubo</button>
-    <button class="obj-btn" data-shape="sphere"><span class="icon">●</span> Sfera</button>
-    <button class="obj-btn" data-shape="torus"><span class="icon">◎</span> Toro</button>
-    <button class="obj-btn" data-shape="pyramid"><span class="icon">▲</span> Piramide</button>
-    <button class="obj-btn" data-shape="crystal"><span class="icon">⬡</span> Cristallo</button>
-    <button class="obj-btn" data-shape="knot"><span class="icon">∞</span> Nodo</button>
-  </div>
-</div>
+    <!-- Footer note -->
+    <p style="text-align:center; color:var(--text-muted); font-size:0.9rem; margin-top:4rem;">
+      Progetto di divulgazione scientifica — Meccanica Quantistica in AR
+    </p>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-(function() {
-  const splash = document.getElementById('splash');
-  const startBtn = document.getElementById('startBtn');
-  const video = document.getElementById('video-bg');
-  const canvas = document.getElementById('ar-canvas');
-  const toast = document.getElementById('toast');
-  const scaleSlider = document.getElementById('scaleSlider');
-  const objectSelector = document.getElementById('objectSelector');
+  </main>
 
-  let scene, camera, renderer;
-  let currentShape = 'cube';
-  let placedObjects = [];
-  let objectScale = 1;
-
-  // Object selector
-  objectSelector.addEventListener('click', (e) => {
-    const btn = e.target.closest('.obj-btn');
-    if (!btn) return;
-    document.querySelectorAll('.obj-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentShape = btn.dataset.shape;
-  });
-
-  scaleSlider.addEventListener('input', (e) => {
-    objectScale = parseFloat(e.target.value);
-  });
-
-  // Three.js setup
-  function initThree() {
-    scene = new THREE.Scene();
-
-    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 5;
-
-    renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
-
-    // Lights
-    const ambient = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambient);
-
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(3, 5, 4);
-    scene.add(dirLight);
-
-    const pointLight1 = new THREE.PointLight(0x00f0ff, 1.5, 15);
-    pointLight1.position.set(-3, 2, 3);
-    scene.add(pointLight1);
-
-    const pointLight2 = new THREE.PointLight(0xff3cac, 1.2, 15);
-    pointLight2.position.set(3, -2, 2);
-    scene.add(pointLight2);
-
-    window.addEventListener('resize', onResize);
-  }
-
-  function onResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  }
-
-  function createMaterial() {
-    const colors = [0x00f0ff, 0xff3cac, 0x00ff87, 0xffe066, 0xaa66ff, 0xff6b6b];
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    return new THREE.MeshPhysicalMaterial({
-      color: color,
-      metalness: 0.3,
-      roughness: 0.15,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.1,
-      transparent: true,
-      opacity: 0.85,
-      envMapIntensity: 1.5,
-    });
-  }
-
-  function createGeometry(shape) {
-    switch(shape) {
-      case 'cube':
-        return new THREE.BoxGeometry(1, 1, 1, 2, 2, 2);
-      case 'sphere':
-        return new THREE.SphereGeometry(0.6, 32, 32);
-      case 'torus':
-        return new THREE.TorusGeometry(0.5, 0.2, 16, 48);
-      case 'pyramid':
-        return new THREE.ConeGeometry(0.6, 1, 4);
-      case 'crystal':
-        return new THREE.OctahedronGeometry(0.6, 0);
-      case 'knot':
-        return new THREE.TorusKnotGeometry(0.4, 0.15, 64, 8);
-      default:
-        return new THREE.BoxGeometry(1, 1, 1);
-    }
-  }
-
-  function createEdges(geometry, color) {
-    const edgeGeo = new THREE.EdgesGeometry(geometry);
-    const edgeMat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.4 });
-    return new THREE.LineSegments(edgeGeo, edgeMat);
-  }
-
-  function placeObject(x, y) {
-    const ndcX = (x / window.innerWidth) * 2 - 1;
-    const ndcY = -(y / window.innerHeight) * 2 + 1;
-
-    const geometry = createGeometry(currentShape);
-    const material = createMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
-
-    // Position in 3D
-    const depth = -2 - Math.random() * 3;
-    mesh.position.set(ndcX * 3, ndcY * 2, depth);
-
-    const s = objectScale * (0.6 + Math.random() * 0.4);
-    mesh.scale.set(s, s, s);
-
-    mesh.rotation.set(
-      Math.random() * Math.PI,
-      Math.random() * Math.PI,
-      Math.random() * Math.PI * 0.5
-    );
-
-    // Wireframe edges
-    const edges = createEdges(geometry, material.color);
-    mesh.add(edges);
-
-    scene.add(mesh);
-
-    // Entry animation
-    mesh.scale.set(0.01, 0.01, 0.01);
-    mesh.userData = {
-      targetScale: s,
-      rotSpeed: { x: (Math.random() - 0.5) * 0.02, y: (Math.random() - 0.5) * 0.02, z: (Math.random() - 0.5) * 0.01 },
-      floatOffset: Math.random() * Math.PI * 2,
-      floatSpeed: 0.5 + Math.random() * 0.5,
-      floatAmp: 0.05 + Math.random() * 0.05,
-      baseY: mesh.position.y,
-      entering: true
-    };
-
-    placedObjects.push(mesh);
-
-    // Limit objects
-    if (placedObjects.length > 20) {
-      const old = placedObjects.shift();
-      scene.remove(old);
-    }
-  }
-
-  // Touch / click to place
-  canvas.addEventListener('click', (e) => {
-    placeObject(e.clientX, e.clientY);
-  });
-  canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    const t = e.touches[0];
-    placeObject(t.clientX, t.clientY);
-  }, { passive: false });
-
-  let time = 0;
-  function animate() {
-    requestAnimationFrame(animate);
-    time += 0.016;
-
-    for (const obj of placedObjects) {
-      const ud = obj.userData;
-
-      // Entry animation
-      if (ud.entering) {
-        const t = ud.targetScale;
-        obj.scale.x += (t - obj.scale.x) * 0.12;
-        obj.scale.y += (t - obj.scale.y) * 0.12;
-        obj.scale.z += (t - obj.scale.z) * 0.12;
-        if (Math.abs(obj.scale.x - t) < 0.01) ud.entering = false;
-      }
-
-      // Rotation
-      obj.rotation.x += ud.rotSpeed.x;
-      obj.rotation.y += ud.rotSpeed.y;
-      obj.rotation.z += ud.rotSpeed.z;
-
-      // Float
-      obj.position.y = ud.baseY + Math.sin(time * ud.floatSpeed + ud.floatOffset) * ud.floatAmp;
-    }
-
-    renderer.render(scene, camera);
-  }
-
-  // Camera
-  async function startCamera() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
-      });
-      video.srcObject = stream;
-      return true;
-    } catch (err) {
-      console.warn('Camera not available:', err);
-      // Fallback: animated gradient background
-      video.style.display = 'none';
-      document.body.style.background = 'linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 40%, #0a1a2e 70%, #0a0a1a 100%)';
-      document.body.style.backgroundSize = '400% 400%';
-      document.body.style.animation = 'bgShift 12s ease infinite';
-      const style = document.createElement('style');
-      style.textContent = '@keyframes bgShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }';
-      document.head.appendChild(style);
-
-      showToast('Fotocamera non disponibile — modalità demo attiva. Tocca per posizionare oggetti!');
-      return false;
-    }
-  }
-
-  function showToast(msg) {
-    toast.textContent = msg;
-    toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 4000);
-  }
-
-  // Start
-  startBtn.addEventListener('click', async () => {
-    splash.classList.add('hidden');
-    initThree();
-    const hasCamera = await startCamera();
-
-    if (hasCamera) {
-      showToast('Tocca lo schermo per posizionare oggetti 3D');
-    }
-
-    animate();
-  });
-
-})();
-</script>
+  <script src="js/main.js"></script>
 </body>
 </html>
