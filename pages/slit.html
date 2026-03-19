@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>La Doppia Fenditura — Quantum AR</title>
+  <link rel="stylesheet" href="../css/style.css">
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+      "mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo">QUANTUM AR</a>
+      <a href="../index.html" class="nav-back">← Livelli</a>
+    </div>
+  </nav>
+
+  <!-- Page -->
+  <main class="page">
+
+    <!-- Progress steps -->
+    <div class="steps">
+      <div class="step active" id="step-learn">
+        <div class="step-dot">1</div>
+        <div class="step-label">Impara</div>
+      </div>
+      <div class="step" id="step-ar">
+        <div class="step-dot">2</div>
+        <div class="step-label">Sperimenta</div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════ -->
+    <!--  SECTION 1: TEORIA + QUIZ insieme  -->
+    <!-- ════════════════════════════════════ -->
+    <section id="learn-section">
+      <span class="section-label" id="level-label">🌊 DOPPIA-FENDITURA</span>
+      <h1 class="page-title" id="level-title">La Doppia Fenditura</h1>
+      <p class="page-subtitle" id="level-subtitle">Onda o particella? La risposta ti sorprenderà</p>
+
+      <!-- Theory cards -->
+      <div id="intro-cards"></div>
+
+      <!-- Quiz inline -->
+      <div style="margin-top:3rem;">
+        <h2 class="page-title" style="font-size:1.8rem; margin-bottom:0.3rem;">📝 Verifica</h2>
+        <p class="page-subtitle" style="margin-bottom:1.5rem;">Rispondi vero o falso — servono almeno 3/5 per sbloccare l'AR</p>
+        <div id="quiz-container"></div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════ -->
+    <!--  SECTION 2: AR EXPERIENCE           -->
+    <!-- ════════════════════════════════════ -->
+    <section class="ar-section" id="ar-section">
+      <h2 class="page-title" style="font-size:2rem; margin-bottom:0.5rem;">🔬 Esperienza AR</h2>
+      <p class="page-subtitle" id="ar-description"></p>
+
+      <p class="ar-info" style="margin-bottom:1rem;">
+        📷 <strong>Stampa o mostra su schermo l'immagine marker</strong> (blink.jpeg) e inquadrala con la fotocamera per ancorare la simulazione.
+      </p>
+
+      <!-- MindAR container -->
+      <div id="ar-container" style="width:100%; height:60vh; min-height:400px; position:relative; border-radius:var(--radius); overflow:hidden; border:2px solid var(--glass-border); background:#000;">
+      </div>
+
+      <!-- Tracking status -->
+      <div class="ar-info" id="tracking-status" style="margin-top:0.5rem; text-align:center;">
+        🔍 <span id="tracking-text">In attesa del marker…</span>
+      </div>
+
+      <!-- Controls -->
+      <div class="ar-controls" id="ar-controls" style="margin-top:1rem;"></div>
+
+      <!-- Feedback -->
+      <div class="ar-info" id="ar-info" style="margin-top:1rem;">
+        <strong style="color:var(--neon-cyan);">💡 Cosa osservi?</strong><br>
+        <span id="ar-feedback">Spara particelle e osserva il pattern sullo schermo. Prova ad attivare il rivelatore!</span>
+      </div>
+
+      <div style="text-align:center; margin-top:1rem;">
+        <button class="btn btn-ghost" id="ar-clear-btn">🗑 Pulisci schermo</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Classic scripts -->
+  <script src="../js/main.js"></script>
+  <script src="../js/quiz.js"></script>
+
+  <!-- Page logic -->
+  <script>
+    (async function () {
+      let data;
+      try {
+        const res = await fetch('../data/doppia-fenditura.json');
+        data = await res.json();
+      } catch (e) {
+        console.error('Errore caricamento dati:', e);
+        document.getElementById('intro-cards').innerHTML =
+          '<p style="color:var(--neon-red);">Errore: impossibile caricare i dati. Verifica che data/doppia-fenditura.json sia nella cartella corretta.</p>';
+        return;
+      }
+
+      // ── Header ──
+      document.getElementById('level-label').textContent = `${data.icon} ${data.id.toUpperCase()}`;
+      document.getElementById('level-title').textContent = data.title;
+      document.getElementById('level-subtitle').textContent = data.subtitle;
+
+      // ── Theory cards ──
+      const introCards = document.getElementById('intro-cards');
+      data.intro.sections.forEach((s, i) => {
+        const div = document.createElement('div');
+        div.className = `card fade-in-up stagger-${Math.min(i + 1, 4)}`;
+        div.innerHTML = `
+          <h3 class="card-heading">${s.heading}</h3>
+          <p class="card-text">${s.text}</p>
+        `;
+        introCards.appendChild(div);
+      });
+
+      // ── Quiz ──
+      const quiz = new Quiz({
+        data: data.quiz,
+        container: '#quiz-container',
+        onPass: () => {
+          document.getElementById('step-learn').classList.remove('active');
+          document.getElementById('step-learn').classList.add('done');
+          document.getElementById('step-ar').classList.add('active');
+
+          const arSection = document.getElementById('ar-section');
+          arSection.classList.add('visible');
+          setTimeout(() => arSection.scrollIntoView({ behavior: 'smooth' }), 300);
+
+          startAR();
+        }
+      });
+      quiz.render();
+
+      // ── AR setup ──
+      document.getElementById('ar-description').textContent = data.ar.description;
+
+      const controlsEl = document.getElementById('ar-controls');
+      data.ar.controls.forEach(ctrl => {
+        const group = document.createElement('div');
+        group.className = 'ar-control-group';
+
+        if (ctrl.type === 'toggle') {
+          group.innerHTML = `
+            <div class="ar-control-label">
+              <span>${ctrl.label}</span>
+              <span class="ar-control-value" id="val-${ctrl.id}" style="color:var(--neon-red);">OFF</span>
+            </div>
+            <button class="ar-toggle" id="ctrl-${ctrl.id}"></button>
+          `;
+        } else {
+          group.innerHTML = `
+            <div class="ar-control-label">
+              <span>${ctrl.label}</span>
+              <span class="ar-control-value" id="val-${ctrl.id}">${ctrl.default}</span>
+            </div>
+            <input type="range" class="ar-slider" id="ctrl-${ctrl.id}"
+                   min="${ctrl.min}" max="${ctrl.max}" step="${ctrl.step}" value="${ctrl.default}">
+          `;
+        }
+        controlsEl.appendChild(group);
+      });
+
+      // ── Start AR ──
+      let arStarted = false;
+
+      async function startAR() {
+        if (arStarted) return;
+        arStarted = true;
+
+        const { AREngine } = await import('../js/ar-engine.js');
+        const { SlitLevel } = await import('../js/slit-level.js');
+
+        const engine = new AREngine({
+          container: '#ar-container',
+          targetSrc: '../assets/targets.mind'
+        });
+        engine.init();
+
+        const statusEl = document.getElementById('tracking-text');
+        document.getElementById('ar-container').addEventListener('target-found', () => {
+          statusEl.innerHTML = '<span style="color:var(--neon-green);">✓ Marker rilevato!</span>';
+        });
+        document.getElementById('ar-container').addEventListener('target-lost', () => {
+          statusEl.innerHTML = '<span style="color:var(--neon-red);">✗ Marker perso — inquadra l\'immagine</span>';
+        });
+
+        const level = new SlitLevel(engine, data.ar);
+
+        // Fire rate
+        document.getElementById('ctrl-fire_rate')?.addEventListener('input', (e) => {
+          const v = parseFloat(e.target.value);
+          level.setFireRate(v);
+          document.getElementById('val-fire_rate').textContent = v;
+        });
+
+        // Detector toggle
+        document.getElementById('ctrl-detector')?.addEventListener('click', function () {
+          const active = this.classList.toggle('active');
+          level.setDetector(active);
+          const valEl = document.getElementById('val-detector');
+          valEl.textContent = active ? 'ON' : 'OFF';
+          valEl.style.color = active ? 'var(--neon-green)' : 'var(--neon-red)';
+          updateFeedback(active);
+        });
+
+        // Clear
+        document.getElementById('ar-clear-btn')?.addEventListener('click', () => level?.clearScreen());
+
+        await engine.start();
+      }
+
+      function updateFeedback(detectorOn) {
+        const fb = document.getElementById('ar-feedback');
+        if (detectorOn) {
+          fb.innerHTML = `<span style="color:var(--neon-red);">Rivelatore ATTIVO.</span> Le particelle si comportano come "palline classiche" — il pattern di interferenza scompare.`;
+        } else {
+          fb.innerHTML = `<span style="color:var(--neon-green);">Rivelatore SPENTO.</span> Le particelle interferiscono con se stesse, creando frange di interferenza.`;
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
