@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Il Laser Quantizzato — Quantum AR</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo">QUANTUM AR</a>
+      <a href="../index.html" class="nav-back">← Livelli</a>
+    </div>
+  </nav>
+
+  <main class="page">
+    <span class="section-label" id="level-label">⚡ LASER</span>
+    <h1 class="page-title" id="level-title">Il Laser Quantizzato</h1>
+    <p class="page-subtitle" id="level-subtitle">Scopri perché la luce viene in pacchetti</p>
+
+    <div id="intro-cards"></div>
+
+    <!-- Action buttons -->
+    <div class="btn-group" style="justify-content:center; margin-top:3rem;">
+      <a href="quiz.html?level=laser" class="btn btn-secondary">📝 Quiz</a>
+      <a href="ar.html?level=laser" class="btn btn-primary">🔬 Esperienza AR</a>
+    </div>
+  </main>
+
+  <script src="../js/main.js"></script>
+  <script>
+    (async function () {
+      let data;
+      try {
+        const res = await fetch('../data/laser.json');
+        data = await res.json();
+      } catch (e) {
+        document.getElementById('intro-cards').innerHTML =
+          '<p style="color:var(--neon-red);">Errore caricamento dati.</p>';
+        return;
+      }
+
+      document.getElementById('level-label').textContent = `${data.icon} ${data.id.toUpperCase()}`;
+      document.getElementById('level-title').textContent = data.title;
+      document.getElementById('level-subtitle').textContent = data.subtitle;
+
+      const container = document.getElementById('intro-cards');
+      data.intro.sections.forEach((s, i) => {
+        const div = document.createElement('div');
+        div.className = `card fade-in-up stagger-${Math.min(i + 1, 4)}`;
+        div.innerHTML = `<h3 class="card-heading">${s.heading}</h3><p class="card-text">${s.text}</p>`;
+        container.appendChild(div);
+      });
+    })();
+  </script>
+</body>
+</html>

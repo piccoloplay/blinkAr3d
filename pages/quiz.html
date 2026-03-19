@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz — Quantum AR</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo">QUANTUM AR</a>
+      <a id="back-link" href="../index.html" class="nav-back">← Torna alla teoria</a>
+    </div>
+  </nav>
+
+  <main class="page">
+    <span class="section-label" id="level-label"></span>
+    <h1 class="page-title" style="font-size:2rem;">📝 Quiz</h1>
+    <p class="page-subtitle" id="quiz-subtitle">Metti alla prova la tua comprensione</p>
+
+    <div id="quiz-container"></div>
+
+    <div style="text-align:center; margin-top:2rem;">
+      <a id="back-btn" href="../index.html" class="btn btn-ghost">← Torna alla teoria</a>
+    </div>
+  </main>
+
+  <script src="../js/main.js"></script>
+  <script src="../js/quiz.js"></script>
+  <script>
+    (async function () {
+      // Read level from URL: quiz.html?level=laser
+      const params = new URLSearchParams(window.location.search);
+      const level = params.get('level');
+
+      if (!level) {
+        document.getElementById('quiz-container').innerHTML =
+          '<p style="color:var(--neon-red);">Nessun livello specificato.</p>';
+        return;
+      }
+
+      // Map level to JSON and back-link
+      const jsonPath = `../data/${level}.json`;
+      const theoryPage = level === 'doppia-fenditura' ? 'slit.html' : `${level}.html`;
+
+      document.getElementById('back-link').href = theoryPage;
+      document.getElementById('back-btn').href = theoryPage;
+
+      let data;
+      try {
+        const res = await fetch(jsonPath);
+        data = await res.json();
+      } catch (e) {
+        document.getElementById('quiz-container').innerHTML =
+          `<p style="color:var(--neon-red);">Errore: impossibile caricare ${jsonPath}</p>`;
+        return;
+      }
+
+      document.getElementById('level-label').textContent = `${data.icon} ${data.title}`;
+      document.getElementById('quiz-subtitle').textContent =
+        `${data.quiz.questions.length} domande — servono ${data.quiz.pass_threshold} risposte corrette`;
+
+      const quiz = new Quiz({
+        data: data.quiz,
+        container: '#quiz-container',
+        onPass: () => { /* optional: could redirect to AR */ },
+        onFail: () => {}
+      });
+      quiz.render();
+    })();
+  </script>
+</body>
+</html>
