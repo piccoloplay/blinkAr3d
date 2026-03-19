@@ -29,6 +29,10 @@ export class AREngine {
 
   // ── Initialise MindAR + Three.js ──
   init() {
+    // Ensure container has required styles for MindAR
+    this.containerEl.style.position = 'relative';
+    this.containerEl.style.overflow = 'hidden';
+
     this.mindar = new MindARThree({
       container: this.containerEl,
       imageTargetSrc: this.targetSrc,
@@ -41,6 +45,28 @@ export class AREngine {
     this.renderer = this.mindar.renderer;
     this.scene = this.mindar.scene;
     this.camera = this.mindar.camera;
+
+    // Ensure Three.js canvas is transparent so camera video shows behind it
+    this.renderer.setClearColor(0x000000, 0);
+    // Make sure the canvas created by MindAR doesn't block the video
+    const canvas = this.renderer.domElement;
+    if (canvas) {
+      canvas.style.position = 'absolute';
+      canvas.style.top = '0';
+      canvas.style.left = '0';
+      canvas.style.zIndex = '2';
+    }
+    // Ensure the video element (created by MindAR) is visible beneath
+    const video = this.containerEl.querySelector('video');
+    if (video) {
+      video.style.position = 'absolute';
+      video.style.top = '0';
+      video.style.left = '0';
+      video.style.width = '100%';
+      video.style.height = '100%';
+      video.style.objectFit = 'cover';
+      video.style.zIndex = '1';
+    }
 
     // Anchor for target index 0 (blink.jpeg)
     this.anchor = this.mindar.addAnchor(0);
@@ -87,6 +113,10 @@ export class AREngine {
     if (this.running) return;
     this.running = true;
     await this.mindar.start();
+
+    // After start, MindAR has created the video element — ensure it's visible
+    this._fixVideoVisibility();
+
     this._lastFrame = performance.now();
 
     this.renderer.setAnimationLoop(() => {
@@ -97,6 +127,35 @@ export class AREngine {
       this.updateCallbacks.forEach(fn => fn(this.clock));
       this.renderer.render(this.scene, this.camera);
     });
+  }
+
+  /** Ensure MindAR's video and canvas are properly layered */
+  _fixVideoVisibility() {
+    // MindAR creates: video (camera feed) + canvas (Three.js) inside container
+    const video = this.containerEl.querySelector('video');
+    const canvas = this.containerEl.querySelector('canvas');
+
+    if (video) {
+      video.style.position = 'absolute';
+      video.style.top = '0';
+      video.style.left = '0';
+      video.style.width = '100%';
+      video.style.height = '100%';
+      video.style.objectFit = 'cover';
+      video.style.zIndex = '1';
+    }
+
+    if (canvas) {
+      canvas.style.position = 'absolute';
+      canvas.style.top = '0';
+      canvas.style.left = '0';
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      canvas.style.zIndex = '2';
+    }
+
+    // Remove any background that might hide the video
+    this.containerEl.style.background = 'transparent';
   }
 
   stop() {
