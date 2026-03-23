@@ -1,0 +1,83 @@
+{
+  "id": "entanglement",
+  "title": "Entanglement Quantistico",
+  "subtitle": "Quando due particelle diventano una cosa sola",
+  "icon": "🔗",
+  "intro": {
+    "sections": [
+      {
+        "heading": "Il legame quantistico",
+        "text": "L'entanglement è uno dei fenomeni più sorprendenti della meccanica quantistica. Quando due particelle interagiscono in un certo modo, diventano 'entangled': il loro stato quantistico non può più essere descritto indipendentemente. Misurare una particella determina istantaneamente lo stato dell'altra, indipendentemente dalla distanza."
+      },
+      {
+        "heading": "Einstein e l'azione spettrale a distanza",
+        "text": "Einstein era profondamente disturbato dall'entanglement. Nel 1935, insieme a Podolsky e Rosen, formulò il paradosso EPR: se la meccanica quantistica è completa, allora due particelle entangled comunicano istantaneamente, violando la relatività. Einstein chiamò questo fenomeno 'azione spettrale a distanza' e credeva che ci fossero variabili nascoste a spiegare le correlazioni."
+      },
+      {
+        "heading": "Bell e la vittoria della quantistica",
+        "text": "Nel 1964, John Bell dimostrò matematicamente che le correlazioni previste dalla meccanica quantistica sono più forti di qualsiasi teoria a variabili nascoste locali. Gli esperimenti — da Aspect (1982) a quelli premiati con il Nobel 2022 — hanno confermato che Bell aveva ragione: l'entanglement è reale e non può essere spiegato classicamente."
+      }
+    ]
+  },
+  "quiz": {
+    "pass_threshold": 3,
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Due particelle entangled possono comunicare informazione più veloce della luce.",
+        "answer": false,
+        "explanation": "Falso! L'entanglement non permette di trasmettere informazione. Le correlazioni appaiono solo confrontando i risultati dopo, non si può usare per inviare messaggi."
+      },
+      {
+        "id": "q2",
+        "text": "Misurare lo spin di una particella entangled determina istantaneamente lo spin dell'altra.",
+        "answer": true,
+        "explanation": "Vero! Al momento della misura, lo stato dell'altra particella viene determinato istantaneamente, indipendentemente dalla distanza."
+      },
+      {
+        "id": "q3",
+        "text": "Einstein accettava pienamente l'entanglement come fenomeno reale.",
+        "answer": false,
+        "explanation": "Falso! Einstein lo considerava un paradosso (EPR) e credeva indicasse che la meccanica quantistica fosse incompleta."
+      },
+      {
+        "id": "q4",
+        "text": "Le disuguaglianze di Bell permettono di distinguere sperimentalmente tra meccanica quantistica e teorie a variabili nascoste.",
+        "answer": true,
+        "explanation": "Vero! Bell trovò un limite matematico che le teorie classiche non possono superare, ma la meccanica quantistica sì. Gli esperimenti confermano la violazione."
+      },
+      {
+        "id": "q5",
+        "text": "L'entanglement funziona solo a brevi distanze, come pochi metri.",
+        "answer": false,
+        "explanation": "Falso! È stato dimostrato a distanze di migliaia di chilometri, anche tra Terra e satellite (esperimento Micius, 2017)."
+      }
+    ]
+  },
+  "ar": {
+    "description": "Osserva due particelle entangled. Tocca per misurare lo spin e vedere la correlazione istantanea.",
+    "controls": [
+      {
+        "id": "distance",
+        "label": "Distanza",
+        "min": 0.3,
+        "max": 2.0,
+        "default": 0.8,
+        "step": 0.1
+      },
+      {
+        "id": "measure_angle",
+        "label": "Angolo misura (°)",
+        "min": 0,
+        "max": 360,
+        "default": 0,
+        "step": 15
+      }
+    ]
+  },
+  "game": {
+    "description": "Fai 20 misure a vari angoli e scopri che le correlazioni violano il limite classico!",
+    "target_measurements": 20,
+    "bell_limit": 2.0
+  }
+}

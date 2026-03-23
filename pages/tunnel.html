@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Effetto Tunnel — Quantum AR</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="nav"><div class="nav-inner">
+    <a href="../index.html" class="nav-logo">QUANTUM AR</a>
+    <a href="../index.html" class="nav-back">← Livelli</a>
+  </div></nav>
+  <main class="page">
+    <span class="section-label" id="level-label"></span>
+    <h1 class="page-title" id="level-title"></h1>
+    <p class="page-subtitle" id="level-subtitle"></p>
+    <div id="intro-cards"></div>
+    <div class="btn-group" style="justify-content:center; margin-top:3rem;">
+      <a href="quiz.html?level=tunnel" class="btn btn-secondary">📝 Quiz</a>
+      <a href="ar.html?level=tunnel" class="btn btn-primary">🔬 Esperienza AR</a>
+      <a href="game.html?level=tunnel" class="btn btn-secondary">🎮 Gioco</a>
+    </div>
+  </main>
+  <script src="../js/main.js"></script>
+  <script>
+    (async function () {
+      let data;
+      try { const r = await fetch('../data/tunnel.json'); data = await r.json(); } catch(e) { return; }
+      document.getElementById('level-label').textContent = `${data.icon} ${data.id.toUpperCase()}`;
+      document.getElementById('level-title').textContent = data.title;
+      document.getElementById('level-subtitle').textContent = data.subtitle;
+      const c = document.getElementById('intro-cards');
+      data.intro.sections.forEach((s, i) => {
+        const d = document.createElement('div');
+        d.className = `card fade-in-up stagger-${Math.min(i+1,4)}`;
+        d.innerHTML = `<h3 class="card-heading">${s.heading}</h3><p class="card-text">${s.text}</p>`;
+        c.appendChild(d);
+      });
+    })();
+  </script>
+</body>
+</html>

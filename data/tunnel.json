@@ -1,0 +1,91 @@
+{
+  "id": "tunnel",
+  "title": "Effetto Tunnel",
+  "subtitle": "Quando le particelle attraversano l'impossibile",
+  "icon": "⛏️",
+  "intro": {
+    "sections": [
+      {
+        "heading": "Attraversare i muri",
+        "text": "Nella fisica classica, una pallina che non ha abbastanza energia per superare una collina rimbalza indietro. Nel mondo quantistico, le particelle possono 'attraversare' barriere di energia anche quando non hanno energia sufficiente per scavalcarle. Questo fenomeno si chiama effetto tunnel."
+      },
+      {
+        "heading": "La funzione d'onda non si ferma",
+        "text": "La chiave è la funzione d'onda: descrive la probabilità di trovare una particella in un certo punto. Quando incontra una barriera, la funzione d'onda non si azzera bruscamente — decade esponenzialmente dentro la barriera. Se la barriera è abbastanza sottile, c'è una probabilità non nulla di trovare la particella dall'altra parte."
+      },
+      {
+        "heading": "Tunnel nella vita reale",
+        "text": "L'effetto tunnel non è solo teoria. Il Sole brucia grazie al tunnel quantistico: i protoni nel nucleo solare non hanno abbastanza energia per superare la repulsione elettrica, ma il tunnel permette la fusione nucleare. Anche il microscopio a effetto tunnel (STM) e la memoria flash dei computer sfruttano questo fenomeno."
+      }
+    ]
+  },
+  "quiz": {
+    "pass_threshold": 3,
+    "questions": [
+      {
+        "id": "q1",
+        "text": "L'effetto tunnel permette a una particella di attraversare una barriera anche senza energia sufficiente.",
+        "answer": true,
+        "explanation": "Vero! La funzione d'onda penetra nella barriera e c'è una probabilità non nulla di trovare la particella dall'altro lato."
+      },
+      {
+        "id": "q2",
+        "text": "Più la barriera è spessa, più è probabile il tunnel.",
+        "answer": false,
+        "explanation": "Falso! La probabilità di tunnel diminuisce esponenzialmente con lo spessore della barriera."
+      },
+      {
+        "id": "q3",
+        "text": "La fusione nucleare nel Sole è possibile grazie all'effetto tunnel.",
+        "answer": true,
+        "explanation": "Vero! I protoni non hanno abbastanza energia per superare la barriera coulombiana, ma il tunnel quantistico permette la fusione."
+      },
+      {
+        "id": "q4",
+        "text": "L'effetto tunnel viola la conservazione dell'energia.",
+        "answer": false,
+        "explanation": "Falso! L'energia totale si conserva. La particella non 'guadagna' energia: semplicemente la funzione d'onda ha una probabilità non nulla di esistere oltre la barriera."
+      },
+      {
+        "id": "q5",
+        "text": "Il microscopio a effetto tunnel (STM) permette di visualizzare singoli atomi.",
+        "answer": true,
+        "explanation": "Vero! L'STM misura la corrente di tunnel tra una punta sottilissima e la superficie, mappando la topografia atomica."
+      }
+    ]
+  },
+  "ar": {
+    "description": "Lancia particelle contro una barriera. Regola energia e spessore per vedere chi passa!",
+    "controls": [
+      {
+        "id": "energy",
+        "label": "Energia particella",
+        "min": 1,
+        "max": 10,
+        "default": 5,
+        "step": 0.5
+      },
+      {
+        "id": "barrier_width",
+        "label": "Spessore barriera",
+        "min": 0.1,
+        "max": 1.0,
+        "default": 0.4,
+        "step": 0.05
+      },
+      {
+        "id": "barrier_height",
+        "label": "Altezza barriera",
+        "min": 3,
+        "max": 12,
+        "default": 7,
+        "step": 0.5
+      }
+    ],
+    "max_particles": 100
+  },
+  "game": {
+    "description": "Fai passare 5 particelle attraverso la barriera! Regola energia e spessore, inclina per il boost.",
+    "target_tunneled": 5
+  }
+}

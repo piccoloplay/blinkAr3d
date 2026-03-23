@@ -1,0 +1,74 @@
+{
+  "id": "heisenberg",
+  "title": "Principio di Heisenberg",
+  "subtitle": "Il limite fondamentale della conoscenza",
+  "icon": "🎯",
+  "intro": {
+    "sections": [
+      {
+        "heading": "Non puoi sapere tutto",
+        "text": "Il principio di indeterminazione di Heisenberg afferma che è impossibile conoscere contemporaneamente con precisione arbitraria sia la posizione sia la quantità di moto di una particella. Non è un limite dei nostri strumenti: è una proprietà fondamentale della natura. La formula è ΔxΔp ≥ ℏ/2."
+      },
+      {
+        "heading": "Perché succede?",
+        "text": "Pensate a un'onda sonora: per conoscere con precisione la frequenza (il 'momento') servono molte oscillazioni, cioè l'onda deve essere lunga — ma allora la sua posizione è incerta. Per localizzarla (posizione precisa) serve un impulso breve, ma un impulso breve contiene molte frequenze diverse — il momento diventa incerto. Le particelle quantistiche si comportano come onde."
+      },
+      {
+        "heading": "Non è colpa del microscopio",
+        "text": "Un errore comune è pensare che l'indeterminazione sia causata dal disturbo della misura (il 'microscopio di Heisenberg'). In realtà, anche senza misurare, la particella non possiede contemporaneamente valori precisi di posizione e momento. È la natura stessa della materia ad essere indeterminata a scala quantistica."
+      }
+    ]
+  },
+  "quiz": {
+    "pass_threshold": 3,
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Il principio di Heisenberg è dovuto alla limitatezza dei nostri strumenti di misura.",
+        "answer": false,
+        "explanation": "Falso! Non è un limite tecnologico ma una proprietà fondamentale della natura. Anche strumenti perfetti non possono superare questo limite."
+      },
+      {
+        "id": "q2",
+        "text": "Se conosci con grande precisione la posizione di una particella, la sua velocità diventa molto incerta.",
+        "answer": true,
+        "explanation": "Vero! È esattamente il principio di indeterminazione: ΔxΔp ≥ ℏ/2. Precisione su uno implica incertezza sull'altro."
+      },
+      {
+        "id": "q3",
+        "text": "Il principio di indeterminazione si applica anche agli oggetti macroscopici come le palle da tennis.",
+        "answer": true,
+        "explanation": "Vero in teoria! Ma per oggetti macroscopici, ℏ è così piccolo che l'indeterminazione è trascurabile. Per un elettrone invece è enorme."
+      },
+      {
+        "id": "q4",
+        "text": "È possibile conoscere con precisione assoluta sia la posizione che il momento di un elettrone.",
+        "answer": false,
+        "explanation": "Falso! Questo è esattamente ciò che il principio di Heisenberg vieta. Il prodotto delle incertezze ha un minimo invalicabile."
+      },
+      {
+        "id": "q5",
+        "text": "L'analogia con le onde sonore aiuta a capire perché posizione e momento non possono essere entrambi precisi.",
+        "answer": true,
+        "explanation": "Vero! Un impulso breve (posizione definita) contiene molte frequenze (momento incerto), e viceversa. È la stessa matematica."
+      }
+    ]
+  },
+  "ar": {
+    "description": "Regola la precisione di posizione e momento. Osserva come l'incertezza su uno aumenta quando stringi l'altro.",
+    "controls": [
+      {
+        "id": "delta_x",
+        "label": "Precisione posizione (Δx)",
+        "min": 0.1,
+        "max": 2.0,
+        "default": 1.0,
+        "step": 0.05
+      }
+    ]
+  },
+  "game": {
+    "description": "Prova a misurare la particella con precisione! Scoprirai che è impossibile bloccarla.",
+    "target_measurements": 15
+  }
+}

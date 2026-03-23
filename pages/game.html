@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Gioco — Quantum AR</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    html, body { margin:0; padding:0; overflow:hidden; width:100%; height:100%; }
+    body::before { display:none; }
+
+    .game-screen {
+      position:fixed; inset:0; z-index:9999;
+      background: var(--quantum-blue);
+      display:flex; flex-direction:column;
+    }
+
+    /* Permission overlay */
+    .perm-overlay {
+      position:fixed; inset:0; z-index:10010;
+      background:rgba(6,14,26,0.95);
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:20px; padding:24px; text-align:center;
+    }
+    .perm-overlay.hidden { display:none; }
+    .perm-overlay h2 {
+      font-family:'Orbitron',sans-serif; font-size:1.4rem;
+      color:var(--neon-cyan);
+    }
+    .perm-overlay p { color:var(--text-dim); max-width:320px; line-height:1.6; }
+
+    /* Game close */
+    .game-close {
+      position:fixed; top:16px; right:16px; z-index:10005;
+      width:48px; height:48px; border-radius:50%;
+      background:rgba(0,0,0,0.6); border:1px solid var(--glass-border);
+      color:#fff; font-size:1.4rem; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    }
+
+    /* Game HUD */
+    .game-hud {
+      position:fixed; top:16px; left:16px; z-index:10004;
+      display:flex; gap:12px; align-items:center;
+    }
+    .game-hud-item {
+      padding:8px 14px; border-radius:var(--radius-pill);
+      background:rgba(0,0,0,0.5);
+      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+      font-family:'Orbitron',sans-serif; font-size:0.7rem;
+      letter-spacing:1px; text-transform:uppercase;
+    }
+    .game-score { color:var(--neon-green); }
+    .game-level-name { color:var(--neon-cyan); }
+
+    /* Audio toggle */
+    .audio-toggle {
+      position:fixed; top:16px; right:76px; z-index:10005;
+      width:48px; height:48px; border-radius:50%;
+      background:rgba(0,0,0,0.6); border:1px solid var(--glass-border);
+      color:#fff; font-size:1.2rem; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    }
+
+    /* Game canvas area */
+    .game-canvas-area {
+      flex:1; position:relative; overflow:hidden;
+    }
+    .game-canvas-area canvas {
+      width:100%; height:100%; display:block;
+    }
+
+    /* Game controls overlay (bottom) */
+    .game-controls {
+      position:fixed; bottom:0; left:0; right:0; z-index:10003;
+      padding:16px 20px 32px;
+      background:linear-gradient(to top, rgba(6,14,26,0.9), transparent);
+      display:flex; flex-wrap:wrap; gap:10px;
+      justify-content:center; align-items:end;
+    }
+
+    .game-btn {
+      padding:14px 28px; border-radius:var(--radius-pill);
+      font-family:'Rajdhani',sans-serif; font-size:1rem; font-weight:600;
+      text-transform:uppercase; letter-spacing:1px;
+      cursor:pointer; transition:all 0.2s; border:none;
+      min-width:120px; text-align:center;
+    }
+    .game-btn-action {
+      background:linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
+      color:#fff; box-shadow:0 0 20px rgba(0,217,255,0.3);
+    }
+    .game-btn-action:active { transform:scale(0.95); }
+    .game-btn-secondary {
+      background:rgba(255,255,255,0.06); border:1px solid var(--glass-border);
+      color:var(--text-dim);
+    }
+
+    .game-slider-group {
+      display:flex; flex-direction:column; gap:4px; min-width:150px;
+    }
+    .game-slider-label {
+      font-size:0.7rem; color:var(--text-muted); letter-spacing:1px;
+      text-transform:uppercase; display:flex; justify-content:space-between;
+    }
+    .game-slider-val { color:var(--neon-cyan); font-weight:700; }
+
+    /* Feedback toast */
+    .game-toast {
+      position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+      z-index:10006; padding:16px 32px; border-radius:var(--radius);
+      background:rgba(0,0,0,0.8); backdrop-filter:blur(16px);
+      font-family:'Orbitron',sans-serif; font-size:1.2rem;
+      text-align:center; pointer-events:none;
+      opacity:0; transition:opacity 0.3s;
+    }
+    .game-toast.visible { opacity:1; }
+
+    /* Tilt indicator */
+    .tilt-indicator {
+      position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+      z-index:10004; font-size:0.7rem; color:var(--text-muted);
+      letter-spacing:1px; text-align:center;
+    }
+    .tilt-dot {
+      width:10px; height:10px; border-radius:50%;
+      background:var(--neon-cyan); margin:6px auto 0;
+      transition:transform 0.1s;
+      box-shadow:0 0 8px var(--neon-cyan);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Permission overlay (for iOS accelerometer) -->
+  <div class="perm-overlay" id="perm-overlay">
+    <h2>🎮 Permessi Necessari</h2>
+    <p>Questo gioco usa l'accelerometro del dispositivo per i controlli. Tocca il bottone per abilitarlo.</p>
+    <button class="btn btn-primary" id="perm-btn">Abilita Sensori di Movimento</button>
+    <button class="btn btn-ghost" style="margin-top:8px;" id="skip-perm">Continua senza accelerometro</button>
+  </div>
+
+  <!-- Game screen -->
+  <div class="game-screen">
+    <!-- Close -->
+    <button class="game-close" id="game-close">✕</button>
+
+    <!-- Audio toggle -->
+    <button class="audio-toggle" id="audio-toggle">🔊</button>
+
+    <!-- HUD -->
+    <div class="game-hud">
+      <div class="game-hud-item game-level-name" id="hud-level"></div>
+      <div class="game-hud-item game-score" id="hud-score"></div>
+    </div>
+
+    <!-- Canvas area (games render here) -->
+    <div class="game-canvas-area" id="game-area">
+      <canvas id="game-canvas"></canvas>
+    </div>
+
+    <!-- Controls (populated per game) -->
+    <div class="game-controls" id="game-controls"></div>
+
+    <!-- Tilt indicator -->
+    <div class="tilt-indicator" id="tilt-indicator" style="display:none;">
+      INCLINAZIONE
+      <div class="tilt-dot" id="tilt-dot"></div>
+    </div>
+
+    <!-- Toast -->
+    <div class="game-toast" id="game-toast"></div>
+  </div>
+
+  <script>
+    // ══════════════════════════════════════
+    //  GAME ENGINE — Accelerometer + Audio
+    // ══════════════════════════════════════
+
+    const GameEngine = {
+      canvas: null,
+      ctx: null,
+      accel: { x: 0, y: 0, z: 0 },
+      hasAccel: false,
+      audio: null,
+      audioPlaying: false,
+      running: false,
+      updateFn: null,
+      renderFn: null,
+      _rafId: null,
+      _lastTime: 0,
+      score: 0,
+
+      // ── Init canvas ──
+      initCanvas() {
+        this.canvas = document.getElementById('game-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this._resize();
+        window.addEventListener('resize', () => this._resize());
+      },
+
+      _resize() {
+        const area = document.getElementById('game-area');
+        this.canvas.width = area.clientWidth * window.devicePixelRatio;
+        this.canvas.height = area.clientHeight * window.devicePixelRatio;
+        this.canvas.style.width = area.clientWidth + 'px';
+        this.canvas.style.height = area.clientHeight + 'px';
+        this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        this.W = area.clientWidth;
+        this.H = area.clientHeight;
+      },
+
+      // ── Accelerometer with iOS permission ──
+      async requestAccelerometer() {
+        // iOS 13+ requires permission
+        if (typeof DeviceMotionEvent !== 'undefined' &&
+            typeof DeviceMotionEvent.requestPermission === 'function') {
+          try {
+            const perm = await DeviceMotionEvent.requestPermission();
+            if (perm === 'granted') {
+              this._bindAccel();
+              return true;
+            }
+          } catch (e) {
+            console.warn('Accelerometer permission denied:', e);
+            return false;
+          }
+        } else if (typeof DeviceMotionEvent !== 'undefined') {
+          // Android / non-iOS: no permission needed
+          this._bindAccel();
+          return true;
+        }
+        return false;
+      },
+
+      _bindAccel() {
+        window.addEventListener('devicemotion', (e) => {
+          const a = e.accelerationIncludingGravity;
+          if (a) {
+            this.accel.x = a.x || 0;
+            this.accel.y = a.y || 0;
+            this.accel.z = a.z || 0;
+            this.hasAccel = true;
+          }
+        });
+
+        // Show tilt indicator
+        document.getElementById('tilt-indicator').style.display = 'block';
+      },
+
+      // ── Audio ──
+      initAudio() {
+        this.audio = new Audio('../assets/audio/quantum-bgm.mp3');
+        this.audio.loop = true;
+        this.audio.volume = 0.3;
+      },
+
+      toggleAudio() {
+        if (!this.audio) return;
+        if (this.audioPlaying) {
+          this.audio.pause();
+          this.audioPlaying = false;
+          document.getElementById('audio-toggle').textContent = '🔇';
+        } else {
+          this.audio.play().catch(() => {});
+          this.audioPlaying = true;
+          document.getElementById('audio-toggle').textContent = '🔊';
+        }
+      },
+
+      startAudio() {
+        if (this.audio && !this.audioPlaying) {
+          this.audio.play().catch(() => {});
+          this.audioPlaying = true;
+        }
+      },
+
+      stopAudio() {
+        if (this.audio) {
+          this.audio.pause();
+          this.audio.currentTime = 0;
+          this.audioPlaying = false;
+        }
+      },
+
+      // ── Game loop ──
+      start(updateFn, renderFn) {
+        this.updateFn = updateFn;
+        this.renderFn = renderFn;
+        this.running = true;
+        this._lastTime = performance.now();
+        this._loop();
+      },
+
+      _loop() {
+        if (!this.running) return;
+        this._rafId = requestAnimationFrame(() => this._loop());
+        const now = performance.now();
+        const dt = Math.min((now - this._lastTime) / 1000, 0.05);
+        this._lastTime = now;
+
+        if (this.updateFn) this.updateFn(dt);
+
+        // Update tilt dot
+        if (this.hasAccel) {
+          const dot = document.getElementById('tilt-dot');
+          dot.style.transform = `translate(${this.accel.x * 3}px, ${-this.accel.y * 3}px)`;
+        }
+
+        if (this.renderFn) this.renderFn(this.ctx, this.W, this.H);
+      },
+
+      stop() {
+        this.running = false;
+        if (this._rafId) cancelAnimationFrame(this._rafId);
+        this.stopAudio();
+      },
+
+      // ── Score ──
+      setScore(val) {
+        this.score = val;
+        document.getElementById('hud-score').textContent = `Score: ${val}`;
+      },
+
+      // ── Toast ──
+      showToast(text, color, duration) {
+        const t = document.getElementById('game-toast');
+        t.textContent = text;
+        t.style.color = color || 'var(--neon-cyan)';
+        t.classList.add('visible');
+        setTimeout(() => t.classList.remove('visible'), duration || 1500);
+      },
+
+      // ── Vibrate ──
+      vibrate(ms) {
+        if (navigator.vibrate) navigator.vibrate(ms || 50);
+      }
+    };
+
+    // ══════════════════════════════════════
+    //  PAGE BOOT
+    // ══════════════════════════════════════
+
+    (async function () {
+      const params = new URLSearchParams(window.location.search);
+      const level = params.get('level');
+      if (!level) { document.getElementById('hud-level').textContent = 'Errore'; return; }
+
+      // Load level data
+      let data;
+      try {
+        const res = await fetch(`../data/${level}.json`);
+        data = await res.json();
+      } catch (e) {
+        document.getElementById('hud-level').textContent = 'Errore dati';
+        return;
+      }
+
+      document.getElementById('hud-level').textContent = `${data.icon} ${data.title}`;
+
+      // Close
+      document.getElementById('game-close').addEventListener('click', () => {
+        GameEngine.stop();
+        window.history.back();
+      });
+
+      // Audio toggle
+      GameEngine.initAudio();
+      document.getElementById('audio-toggle').addEventListener('click', () => {
+        GameEngine.toggleAudio();
+      });
+
+      // Permission flow
+      const permOverlay = document.getElementById('perm-overlay');
+      const permBtn = document.getElementById('perm-btn');
+      const skipBtn = document.getElementById('skip-perm');
+
+      // Check if permission needed
+      const needsPermission = typeof DeviceMotionEvent !== 'undefined' &&
+                              typeof DeviceMotionEvent.requestPermission === 'function';
+
+      if (!needsPermission) {
+        // Android or desktop: try binding directly
+        GameEngine.requestAccelerometer();
+        permOverlay.classList.add('hidden');
+        startGame(level, data);
+      } else {
+        // iOS: show permission overlay
+        permBtn.addEventListener('click', async () => {
+          const granted = await GameEngine.requestAccelerometer();
+          permOverlay.classList.add('hidden');
+          startGame(level, data);
+          if (!granted) {
+            GameEngine.showToast('Accelerometro non disponibile', 'var(--neon-red)', 2000);
+          }
+        });
+
+        skipBtn.addEventListener('click', () => {
+          permOverlay.classList.add('hidden');
+          startGame(level, data);
+        });
+      }
+
+      async function startGame(level, data) {
+        GameEngine.initCanvas();
+        GameEngine.startAudio();
+
+        // Dynamic import of game module
+        const module = await import(`../js/games/${level}-game.js`);
+        module.default(GameEngine, data);
+      }
+    })();
+  </script>
+</body>
+</html>
